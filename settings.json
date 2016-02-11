@@ -11,9 +11,9 @@
 		    "id" : 0,
 		    "pos" : "bottom_left",
 		    "x_lo" : 500,
-		    "x_hi" : 1500,
+		    "x_hi" : 1000,
 		    "y_lo" : 500,
-		    "y_hi" : 1500,
+		    "y_hi" : 1000,
 		    "overscan_x_lo" : 8,
 		    "overscan_x_hi" : 42,
 		    "overscan_y_lo" : 8,
@@ -36,28 +36,28 @@
 		{
 		    "id" : 2,
 		    "pos" : "top_right",
-		    "x_lo" : 2148,
-		    "x_hi" : 2921,
-		    "y_lo" : 2148,
-		    "y_hi" : 4038,
+		    "x_lo" : 2200,
+		    "x_hi" : 2500,
+		    "y_lo" : 3700,
+		    "y_hi" : 4000,
 		    "overscan_x_lo" : 4157,
 		    "overscan_x_hi" : 4197,
 		    "overscan_y_lo" : 2081,
 		    "overscan_y_hi" : 4121,
-                    "is_defective" : false
+                    "is_defective" : true
 		},
 		{
 		    "id" : 3,
 		    "pos" : "top_left",
-		    "x_lo" : 2219,
-		    "x_hi" : 2260,
-		    "y_lo" : 2088,
-		    "y_hi" : 2207,
+		    "x_lo" : 1200,
+		    "x_hi" : 2000,
+		    "y_lo" : 2100,
+		    "y_hi" : 2600,
 		    "overscan_x_lo" : 8,
 		    "overscan_x_hi" : 42,
 		    "overscan_y_lo" : 2081,
 		    "overscan_y_hi" : 4121,
-                    "is_defective" : false
+                    "is_defective" : true
 		}
 	    ]
         }

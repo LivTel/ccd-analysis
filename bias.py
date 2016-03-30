@@ -8,7 +8,6 @@ import pylab as plt
 
 from utility import readSettingsFile as rsf
 from utility import processDataPathParameter as pdpp
-import fft
 
 class bias_errors:
     def __init__(self, logging):
@@ -41,7 +40,7 @@ class bias_errors:
             logging.warning(errorMsg)
 
 class bias:  
-    def __init__(self, dataPath, settingsFile, instName, makePlots, diagnosticMode, doSpatial, doTemporal, doFFT, err, logging):
+    def __init__(self, dataPath, settingsFile, instName, makePlots, diagnosticMode, doSpatial, doTemporal, err, logging):
         self.files = pdpp(dataPath)
         if len(self.files) == 0:
             err.setError(-4)
@@ -52,7 +51,6 @@ class bias:
         self.diagnosticMode = diagnosticMode
         self.doSpatialAnalysis = doSpatial
         self.doTemporalAnalysis = doTemporal
-        self.doFFTAnalysis = doFFT
         self.err = err
         self.logging = logging
 
@@ -79,14 +77,16 @@ class bias:
 
         if self.doSpatialAnalysis:
             '''
+            calculates the mean and standard deviation of a specified section within each frame and (optionally) plots a histogram.
+ 
             returns a list as [file][quadrant].
             '''
             logging.info("(bias.run) performing spatial analysis of read noise") 
             res = []
             idx_f = 0
-            for data, dummy, hdr in zip(files_data, files_dummy, files_hdr):
+            for data, dummy, hdr in zip(files_data, files_dummy, files_hdr):	# for each frame
                 res_thisfile = []
-                for q in self.settings['quadrants']:
+                for q in self.settings['quadrants']:				# for each quadrant
                     qid = q['id']
                     pos = q['pos']
                     x_lo = int(q['x_lo'])
@@ -146,12 +146,14 @@ class bias:
 
         if self.doTemporalAnalysis:
             '''
+            determines the mean and standard deviation of each pixel within a specified section from frame to frame and (optionally) plots a histogram.
+
             returns a list as [quadrant][pixel].
             '''
             if len(files_data) > 2:
                 logging.info("(bias.run) performing temporal analysis of read noise")
                 res = []
-                for q in self.settings['quadrants']:
+                for q in self.settings['quadrants']:						# for each quadrant
                     qid = q['id']
                     pos = q['pos']
                     x_lo = int(q['x_lo'])
@@ -173,7 +175,7 @@ class bias:
                     logging.debug("(bias.run) overscan x range of quadrant is defined by " + str(overscan_x_lo) + " < x < " + str(overscan_x_hi))
                     logging.debug("(bias.run) overscan y range of quadrant is defined by " + str(overscan_y_lo) + " < y < " + str(overscan_y_hi))
                     data_thisq = []
-                    for data, dummy, hdr in zip(files_data, files_dummy, files_hdr):
+                    for data, dummy, hdr in zip(files_data, files_dummy, files_hdr):		# for each frame
                         this_data = data[y_lo:y_hi, x_lo:x_hi]-np.mean(data[overscan_y_lo:overscan_y_hi, overscan_x_lo:overscan_x_hi])
                         if self.settings['do_dummy_subtraction']:
                             this_dummy = dummy[y_lo:y_hi, x_lo:x_hi]-np.mean(dummy[overscan_y_lo:overscan_y_hi, overscan_x_lo:overscan_x_hi])
@@ -208,46 +210,6 @@ class bias:
 
             else:  
                 logging.info("(bias.run) only one file in dataPath found, omitting temporal analysis")
-
-        if self.doFFTAnalysis: 
-            for data, dummy, hdr in zip(files_data, files_dummy, files_hdr):
-                for q in self.settings['quadrants']:
-                    qid = q['id']
-                    pos = q['pos']
-                    x_lo = int(q['x_lo'])
-                    x_hi = int(q['x_hi'])
-                    y_lo = int(q['y_lo'])
-                    y_hi = int(q['y_hi'])
-                    overscan_x_lo = int(q['overscan_x_lo'])
-                    overscan_x_hi = int(q['overscan_x_hi'])
-                    overscan_y_lo = int(q['overscan_y_lo'])
-                    overscan_y_hi = int(q['overscan_y_hi'])
-                    is_defective = bool(q['is_defective'])
-                    if is_defective:
-                        logging.info("(bias.run) omitting defective quadrant " + str(qid) + " with position \"" + str(pos) + "\"")
-                        continue
-                    logging.info("(bias.run) processing quadrant " + str(qid+1) + " with position \"" + str(pos) + "\"")
-                    logging.debug("(bias.run) x range of quadrant is defined by " + str(x_lo) + " < x < " + str(x_hi))
-                    logging.debug("(bias.run) y range of quadrant is defined by " + str(y_lo) + " < y < " + str(y_hi))
-                    logging.debug("(bias.run) overscan x range of quadrant is defined by " + str(overscan_x_lo) + " < x < " + str(overscan_x_hi))
-                    logging.debug("(bias.run) overscan y range of quadrant is defined by " + str(overscan_y_lo) + " < y < " + str(overscan_y_hi))
-                 
-                    n = fft.fft()
-                    this_data = data[y_lo:y_hi, x_lo:x_hi]-np.mean(data[overscan_y_lo:overscan_y_hi, overscan_x_lo:overscan_x_hi])
-                    if self.settings['do_dummy_subtraction']:
-                        this_dummy = dummy[y_lo:y_hi, x_lo:x_hi]-np.mean(dummy[overscan_y_lo:overscan_y_hi, overscan_x_lo:overscan_x_hi])
-                        freq, psdx = n.do1DReadoutFFT(this_data-this_dummy, int(self.settings['readout_speed']))
-                    else:
-                        freq, psdx = n.do1DReadoutFFT(this_data, int(self.settings['readout_speed']))
-                        
-                    if self.makePlots:
-                        plt.figure()
-                        plt.clf()
-                        plt.loglog(freq, psdx)
-                        plt.yticks([])
-                        plt.xlabel('Frequency (Hz)')
-                        plt.ylabel('Power')
-                        plt.show()
   
 if __name__  == "__main__":
     parser = optparse.OptionParser()
@@ -260,13 +222,12 @@ if __name__  == "__main__":
     parser.add_option_group(group1)
 
     group2 = optparse.OptionGroup(parser, "Instrument Setup") 
-    group2.add_option('--s', action='store', default="WEAVEPROTO", type=str, dest='instName', help='Instrument name from settings file')
+    group2.add_option('--s', action='store', default="WEAVEPROTO", type=str, dest='instName', help='Instrument configuration name (from settings file)')
     parser.add_option_group(group2)
     
     group3 = optparse.OptionGroup(parser, "Analysis") 
     group3.add_option('--spa', action='store_true', dest='doSpatial', help='Do spatial analysis?')
     group3.add_option('--tem', action='store_true', dest='doTemporal', help='Do temporal analysis?')
-    group3.add_option('--fft', action='store_true', dest='doFFT', help='Do FFT analysis?')
     parser.add_option_group(group3)
 
     args = parser.parse_args()
@@ -291,7 +252,7 @@ if __name__  == "__main__":
         err.setError(-3)
         err.handleError()
 
-    b = bias(options.dataPath, options.settingsFile, options.instName, options.makePlots, options.diagnosticMode, options.doSpatial, options.doTemporal, options.doFFT, err, logging)
+    b = bias(options.dataPath, options.settingsFile, options.instName, options.makePlots, options.diagnosticMode, options.doSpatial, options.doTemporal, err, logging)
     b.run()
     
     

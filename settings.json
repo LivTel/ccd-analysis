@@ -5,28 +5,27 @@
             "data_hdu" : 1,
             "dummy_hdu" : 2,
             "do_dummy_subtraction" : false,
-            "readout_speed" : 500000,
             "quadrants" : [
 		{
 		    "id" : 0,
 		    "pos" : "bottom_left",
-		    "x_lo" : 500,
-		    "x_hi" : 1000,
-		    "y_lo" : 500,
-		    "y_hi" : 1000,
+		    "x_lo" : 1050,
+		    "x_hi" : 1150,
+		    "y_lo" : 380,
+		    "y_hi" : 480,
 		    "overscan_x_lo" : 8,
 		    "overscan_x_hi" : 42,
 		    "overscan_y_lo" : 8,
 		    "overscan_y_hi" : 2051,
-                    "is_defective" : false
+                    "is_defective" : true
 		},
 		{
 		    "id" : 1,
 		    "pos" : "bottom_right",
-		    "x_lo" : 2148,
-		    "x_hi" : 4138,
-		    "y_lo" : 63,
-		    "y_hi" : 2021,
+		    "x_lo" : 0,
+		    "x_hi" : 0,
+		    "y_lo" : 0,
+		    "y_hi" : 0,
 		    "overscan_x_lo" : 4157,
 		    "overscan_x_hi" : 4197,
 		    "overscan_y_lo" : 8,
@@ -36,10 +35,10 @@
 		{
 		    "id" : 2,
 		    "pos" : "top_right",
-		    "x_lo" : 2200,
-		    "x_hi" : 2500,
-		    "y_lo" : 3700,
-		    "y_hi" : 4000,
+		    "x_lo" : 3200,
+		    "x_hi" : 3800,
+		    "y_lo" : 2100,
+		    "y_hi" : 2600,
 		    "overscan_x_lo" : 4157,
 		    "overscan_x_hi" : 4197,
 		    "overscan_y_lo" : 2081,
@@ -49,15 +48,15 @@
 		{
 		    "id" : 3,
 		    "pos" : "top_left",
-		    "x_lo" : 1200,
-		    "x_hi" : 2000,
-		    "y_lo" : 2100,
-		    "y_hi" : 2600,
+		    "x_lo" : 450,
+		    "x_hi" : 550,
+		    "y_lo" : 3700,
+		    "y_hi" : 3800,
 		    "overscan_x_lo" : 8,
 		    "overscan_x_hi" : 42,
 		    "overscan_y_lo" : 2081,
 		    "overscan_y_hi" : 4121,
-                    "is_defective" : true
+                    "is_defective" : false
 		}
 	    ]
         }

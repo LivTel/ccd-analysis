@@ -18,6 +18,9 @@ class fft:
         return freq, psdx
 
     def do1DReadoutFFT(self, data, fs):
+        '''
+        reformat data into 2D
+        '''
         data_1D = np.fliplr(data).ravel()
         this_freq, this_psdx = self._1DFFT(data_1D, fs)
         return this_freq, this_psdx

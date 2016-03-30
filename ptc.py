@@ -12,6 +12,8 @@ from scipy.stats import sigmaclip
 from utility import readSettingsFile as rsf
 from utility import processDataPathParameter as pdpp
 
+MINIMUM_FRAMES_REQUIRED = 5
+
 class ptc_errors:
     def __init__(self, logging):
         self._errorCode		= 0
@@ -21,7 +23,8 @@ class ptc_errors:
 				   -1	: "(__main__) no dataPath specified", 
 				   -2	: "(__main__) invalid settings file", 
 				   -3	: "(__main__) failed to find instrument setup from settings file",
-				   -4	: "(ptc.run) no data found at specified dataPath"
+				   -4	: "(ptc.run) no data found at specified dataPath",
+                                   -5	: "(ptc.run) insufficient frames for ptc (" + str(MINIMUM_FRAMES_REQUIRED) + ")",
                                   } 
 
     def setError(self, newErrorCode):
@@ -91,7 +94,7 @@ class ptc:
             logging.debug("(ptc.run) overscan y range of quadrant is defined by " + str(overscan_y_lo) + " < y < " + str(overscan_y_hi))
 
             ##
-            ## read this quadrant's data and remove bias
+            ## read this quadrant's data and remove bias (and dummy if requested)
             ## 
             files_data = {}
             files_hdr = {}
@@ -147,18 +150,22 @@ class ptc:
             if self.diagnosticMode:
                 plt.imshow(np.mean(diff_stk, axis=0), vmax=np.percentile(np.mean(diff_stk, axis=0), 95), vmin=np.percentile(np.mean(diff_stk, axis=0), 5))
                 plt.colorbar()
-                plt.show()
+                plt.show()     
 
-            res.append(res_thisq)
-            
+            if len(res_thisq) < MINIMUM_FRAMES_REQUIRED:
+                err.setError(-5)
+                err.handleError()
+                res.append(None)
+            else:
+                res.append(res_thisq)
+
         rn = []
         gain = []
         qx = []
         qy = []
         for idx_q, q in enumerate(res): 
             pos = self.settings['quadrants'][idx_q]['pos']
-            is_defective = bool(self.settings['quadrants'][idx_q]['is_defective'])
-            if is_defective:
+            if q is None:
                 rn.append(None)
                 gain.append(None)
                 qx.append(None)
@@ -176,7 +183,7 @@ class ptc:
                 
             x = np.asarray(thisq_mean_all)
             y = np.asarray(thisq_std_all)
-            
+
             # hazard a guess at read regime by:
             ## i) finding gradients for each index in data array using a linear fit
             ## ii) find index with gradient of ~0.2 (shot regime for loglog) by assessing truth array for adjacent indices of <0.2 and >0.2
@@ -221,8 +228,9 @@ class ptc:
             print "\tw: define point for shot noise"
             print "\te: define full well"
             print "\ta: smooth data with cubic spline"
-            print "\tx: clear point"
-            print "\tm: clear all"
+            print "\tx: clear point definition"
+            print "\tm: clear all point definitions"
+            print "\tr: remove point from dataset (will reset point definitions)"
             print
             
             class define_PTC_regions(object):
@@ -353,6 +361,17 @@ class ptc:
                         idx, val = self.find_closest_point(x, y, self.x, self.y)
                         self.fwd = idx       
                         print "i: added fwd line"
+                    if event.key == 'r':
+                        idx, val = self.find_closest_point(x, y, self.x, self.y)
+                        self.read = []
+                        self.shot = []
+                        self.fwd = None
+                        self.rn = None
+                        self.gain = None
+                        self.x = np.delete(self.x, idx) 
+                        self.y = np.delete(self.y, idx) 
+			self.c_idx = None
+                        print "i: reset point definitions and removed point from dataset"
                     elif event.key == 'x':
                         idx, val = self.find_closest_point(x, y, self.x, self.y)
                         if idx in self.read:
@@ -374,7 +393,7 @@ class ptc:
                         self.fwd = None
                         self.rn = None
                         self.gain = None
-                        print "i: cleared all points" 
+                        print "i: cleared all point definitions" 
                     elif event.key == 'a':
                         self.smooth_data()
                         self.calculate_gain() 
@@ -459,7 +478,7 @@ if __name__  == "__main__":
     parser.add_option_group(group1)
 
     group2 = optparse.OptionGroup(parser, "Instrument Setup") 
-    group2.add_option('--s', action='store', default="WEAVEPROTO", type=str, dest='instName', help='Instrument name from settings file')
+    group2.add_option('--s', action='store', default="WEAVEPROTO", type=str, dest='instName', help='Instrument configuration name (from settings file)')
     parser.add_option_group(group2)
 
     args = parser.parse_args()
